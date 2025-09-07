@@ -279,7 +279,7 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 
 ## 👥 Autores
 
-- **Rogério Assunção** - *Desenvolvimento inicial* - [SeuGitHub](https://github.com/devjogerio)
+- **Rogério Assunção** - *Desenvolvimento inicial* - [Meu_GitHub](https://github.com/devjogerio)
 
 ## 🙏 Agradecimentos
 
