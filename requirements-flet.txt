@@ -1,0 +1,40 @@
+# Framework Desktop
+flet==0.21.2
+
+# Banco de Dados
+SQLAlchemy>=2.0.35
+
+# Web Scraping
+selenium==4.15.2
+beautifulsoup4==4.12.2
+requests==2.31.0
+# lxml==4.9.3  # Removido devido a problemas de compilação no Python 3.13
+
+# Exportação Excel
+openpyxl==3.1.2
+# pandas==2.1.4  # Removido devido a problemas de compilação
+
+# Utilitários
+python-dotenv==1.0.0
+click==8.1.7
+
+# Logs e Monitoramento
+coloredlogs==15.0.1
+
+# Validação
+marshmallow==3.20.1
+
+# Threading (built-in)
+# threading-timer==0.1.0  # Não necessário, usando threading nativo
+
+# Desenvolvimento e Testes (opcional)
+pytest==7.4.3
+pytest-cov==4.1.0
+flake8==6.1.0
+black==23.11.0
+
+# Dependências do Sistema (ChromeDriver)
+# Nota: ChromeDriver deve ser instalado separadamente
+# macOS: brew install chromedriver
+# Windows: Baixar de https://chromedriver.chromium.org/
+# Linux: sudo apt-get install chromium-chromedriver
