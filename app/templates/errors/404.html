@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Página Não Encontrada - Facebook Scraper{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4 class="text-warning">
+                    <i class="bi bi-search"></i>
+                    Página Não Encontrada
+                </h4>
+            </div>
+            <div class="card-body text-center">
+                <h1 class="display-1 text-muted">404</h1>
+                <p class="lead">A página que você está procurando não foi encontrada.</p>
+                <p class="text-muted">
+                    A URL pode estar incorreta ou a página pode ter sido movida ou removida.
+                </p>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-facebook me-2">
+                        <i class="bi bi-house"></i>
+                        Ir para Dashboard
+                    </a>
+                    <a href="{{ url_for('scraping.new_task') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle"></i>
+                        Nova Tarefa
+                    </a>
+                </div>
+                
+                <hr class="my-4">
+                
+                <div class="text-muted">
+                    <small>
+                        Verifique se a URL está correta ou use a navegação acima.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{%

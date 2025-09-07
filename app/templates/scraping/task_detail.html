@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.name }} - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-file-text me-2 text-primary"></i>
+                {{ task.name }}
+            </h1>
+            <div>
+                {% if task.status == 'pending' %}
+                    <button class="btn btn-success me-2" onclick="startTask({{ task.id }})">
+                        <i class="bi bi-play me-1"></i>
+                        Iniciar
+                    </button>
+                {% elif task.status == 'running' %}
+                    <button class="btn btn-warning me-2" onclick="stopTask({{ task.id }})">
+                        <i class="bi bi-stop me-1"></i>
+                        Parar
+                    </button>
+                {% elif task.status == 'completed' %}
+                    <a href="{{ url_for('export.export_page', task_id=task.id) }}" class="btn btn-info me-2">
+                        <i class="bi bi-download me-1"></i>
+                        Exportar
+                    </a>
+                {% endif %}
+                
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status e Informações Principais -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Status</h6>
+                        {% if task.status == 'completed' %}
+                            <span class="badge bg-success fs-6">
+                                <i class="bi bi-check-circle me-1"></i>Concluída
+                            </span>
+                        {% elif task.status == 'running' %}
+                            <span class="badge bg-warning fs-6">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Executando
+                            </span>
+                        {% elif task.status == 'pending' %}
+                            <span class="badge bg-secondary fs-6">
+                                <i class="bi bi-clock me-1"></i>Pendente
+                            </span>
+                        {% elif task.status == 'failed' %}
+                            <span class="badge bg-danger fs-6">
+                                <i class="bi bi-x-circle me-1"></i>Falhou
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Progresso</h6>
+                        {% if task.status == 'running' and task.progress %}
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: {{ task.progress }}%" 
+                                     aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ task.progress }}%
+                                </div>
+                            </div>
+                        {% elif task.status == 'completed' %}
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%">
+                                    100% Concluído
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%">
+                                    0%
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">URL</h6>
+                        <a href="{{ task.url }}" target="_blank" class="text-decoration-none">
+                            {{ task.url }}
+                            <i class="bi bi-box-arrow-up-right ms-1"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Criada em</h6>
+                        <span>{{ task.created_at.strftime('%d/%m/%Y às %H:%M') if task.created_at else 'N/A' }}</span>
+                    </div>
+                </div>
+                
+                {% if task.description %}
+                <hr>
+                <h6 class="text-muted mb-2">Descrição</h6>
+                <p class="mb-0">{{ task.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-bar-chart me-2"></i>
+                    Estatísticas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-0">{{ task.items_processed or 0 }}</h4>
+                            <small class="text-muted">Itens Processados</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h4 class="text-success mb-0">{{ task.items_extracted or 0 }}</h4>
+                        <small class="text-muted">Dados Extraídos</small>
+                    </div>
+                </div>
+                
+                {% if task.started_at %}
+                <hr>
+                <div class="text-center">
+                    <h6 class="text-muted mb-2">Tempo de Execução</h6>
+                    <span class="badge bg-info">
+                        {% if task.completed_at %}
+                            {{ ((task.completed_at - task.started_at).total_seconds() / 60) | round(1) }} min
+                        {% elif task.status == 'running' %}
+                            Em execução...
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configurações da Tarefa -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-gear me-2"></i>
+                    Configurações
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted mb-2">Máximo de Itens</h6>
+                        <span class="badge bg-primary">{{ task.get_config().get('max_items', 'N/A') }}</span>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted mb-2">Tipos de Dados</h6>
+                        <span class="badge bg-primary">{{ task.get_config().get('data_types', [])|length }} tipos</span>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted mb-2">URL</h6>
+                        <span class="badge bg-info">{{ 'Facebook' if 'facebook.com' in task.url else 'Outro' }}</span>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted mb-2">Status</h6>
+                        <span class="badge bg-{{ 'success' if task.status == 'completed' else 'warning' if task.status == 'running' else 'secondary' }}">
+                            {{ task.status.title() }}
+                        </span>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h6 class="text-muted mb-3">Tipos de Dados para Extrair</h6>
+                <div class="row">
+                    {% set extract_types = {
+                        'extract_posts': ('Posts', 'bi-file-text'),
+                        'extract_comments': ('Comentários', 'bi-chat'),
+                        'extract_likes': ('Likes', 'bi-heart'),
+                        'extract_shares': ('Shares', 'bi-share'),
+                        'extract_profile_info': ('Perfil', 'bi-person'),
+                        'extract_media': ('Mídia', 'bi-image')
+                    } %}
+                    
+                    {% set config = task.get_config() %}
+                    {% set data_types = config.get('data_types', []) %}
+                    
+                    {% if 'post' in data_types %}
+                    <div class="col-md-2 col-sm-4 mb-2">
+                        <span class="badge bg-success">
+                            <i class="bi bi-file-text me-1"></i>Posts
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if 'comment' in data_types %}
+                    <div class="col-md-2 col-sm-4 mb-2">
+                        <span class="badge bg-success">
+                            <i class="bi bi-chat me-1"></i>Comentários
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if 'like' in data_types %}
+                    <div class="col-md-2 col-sm-4 mb-2">
+                        <span class="badge bg-success">
+                            <i class="bi bi-heart me-1"></i>Curtidas
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if 'profile' in data_types %}
+                    <div class="col-md-2 col-sm-4 mb-2">
+                        <span class="badge bg-success">
+                            <i class="bi bi-person me-1"></i>Perfil
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dados Extraídos -->
+{% if task.status == 'completed' and facebook_data %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-database me-2"></i>
+                    Dados Extraídos ({{ facebook_data|length }} registros)
+                </h5>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="filterData('all')" id="filterAll">
+                        Todos
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="filterData('post')" id="filterPost">
+                        Posts
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="filterData('comment')" id="filterComment">
+                        Comentários
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="filterData('profile')" id="filterProfile">
+                        Perfil
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 500px;">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Conteúdo</th>
+                                <th>Autor</th>
+                                <th>Data</th>
+                                <th>Engajamento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                            {% for data in facebook_data %}
+                            <tr class="data-row" data-type="{{ data.data_type }}">
+                                <td>
+                                    {% if data.data_type == 'post' %}
+                                        <span class="badge bg-primary">
+                                            <i class="bi bi-file-text me-1"></i>Post
+                                        </span>
+                                    {% elif data.data_type == 'comment' %}
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-chat me-1"></i>Comentário
+                                        </span>
+                                    {% elif data.data_type == 'profile' %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-person me-1"></i>Perfil
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 300px;" title="{{ data.content }}">
+                                        {{ data.content[:100] }}{% if data.content|length > 100 %}...{% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <small>{{ data.author or 'N/A' }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ data.timestamp.strftime('%d/%m %H:%M') if data.timestamp else 'N/A' }}</small>
+                                </td>
+                                <td>
+                                    {% if data.likes or data.shares or data.comments_count %}
+                                        <div class="d-flex gap-2">
+                                            {% if data.likes %}
+                                                <small class="text-danger">
+                                                    <i class="bi bi-heart"></i> {{ data.likes }}
+                                                </small>
+                                            {% endif %}
+                                            {% if data.shares %}
+                                                <small class="text-primary">
+                                                    <i class="bi bi-share"></i> {{ data.shares }}
+                                                </small>
+                                            {% endif %}
+                                            {% if data.comments_count %}
+                                                <small class="text-info">
+                                                    <i class="bi bi-chat"></i> {{ data.comments_count }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Logs da Execução -->
+{% if task.logs %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-journal-text me-2"></i>
+                    Logs de Execução
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="toggleLogs()" id="toggleLogsBtn">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </div>
+            <div class="card-body collapse" id="logsSection">
+                <div class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">
+                    <pre class="mb-0"><code>{{ task.logs }}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Filtrar dados por tipo
+function filterData(type) {
+    const rows = document.querySelectorAll('.data-row');
+    const buttons = document.querySelectorAll('[onclick^="filterData"]');
+    
+    // Resetar botões
+    buttons.forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-outline-secondary');
+    });
+    
+    // Ativar botão selecionado
+    document.getElementById('filter' + type.charAt(0).toUpperCase() + type.slice(1)).classList.remove('btn-outline-secondary');
+    document.getElementById('filter' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('btn-primary');
+    
+    // Filtrar linhas
+    rows.forEach(row => {
+        if (type === 'all' || row.dataset.type === type) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Toggle logs
+function toggleLogs() {
+    const logsSection = document.getElementById('logsSection');
+    const toggleBtn = document.getElementById('toggleLogsBtn');
+    const icon = toggleBtn.querySelector('i');
+    
+    if (logsSection.classList.contains('show')) {
+        logsSection.classList.remove('show');
+        icon.className = 'bi bi-chevron-down';
+    } else {
+        logsSection.classList.add('show');
+        icon.className = 'bi bi-chevron-up';
+    }
+}
+
+// Ações de tarefa
+function startTask(taskId) {
+    if (confirm('Deseja iniciar esta tarefa?')) {
+        fetch(`/task/${taskId}/start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success || !data.error) {
+                location.reload();
+            } else {
+                alert('Erro ao iniciar tarefa: ' + (data.error || data.message));
+            }
+        })
+        .catch(error => {
+            alert('Erro ao iniciar tarefa: ' + error.message);
+        });
+    }
+}
+
+function stopTask(taskId) {
+    if (confirm('Deseja parar esta tarefa?')) {
+        fetch(`/task/${taskId}/stop`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success || !data.error) {
+                location.reload();
+            } else {
+                alert('Erro ao parar tarefa: ' + (data.error || data.message));
+            }
+        })
+        .catch(error => {
+            alert('Erro ao parar tarefa: ' + error.message);
+        });
+    }
+}
+
+// Auto-refresh para tarefas em execução
+{% if task.status == 'running' %}
+setInterval(() => {
+    location.reload();
+}, 10000); // Atualizar a cada 10 segundos
+{% endif %}
+</script>
+{% endblock %}

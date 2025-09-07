@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Completo - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-list-task me-2 text-primary"></i>
+                Todas as Tarefas
+            </h1>
+            <div>
+                <a href="{{ url_for('scraping.new_task') }}" class="btn btn-primary me-2">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Nova Tarefa
+                </a>
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-house me-1"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">Todos os Status</option>
+                            <option value="pending" {{ 'selected' if request.args.get('status') == 'pending' }}>Pendente</option>
+                            <option value="running" {{ 'selected' if request.args.get('status') == 'running' }}>Executando</option>
+                            <option value="completed" {{ 'selected' if request.args.get('status') == 'completed' }}>Concluída</option>
+                            <option value="failed" {{ 'selected' if request.args.get('status') == 'failed' }}>Falhou</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Buscar</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               placeholder="Nome ou URL" value="{{ request.args.get('search', '') }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="date_from" class="form-label">Data Inicial</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from" 
+                               value="{{ request.args.get('date_from', '') }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="date_to" class="form-label">Data Final</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to" 
+                               value="{{ request.args.get('date_to', '') }}">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>
+                                Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Tarefas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-table me-2"></i>
+                    Tarefas ({{ tasks|length }} encontradas)
+                </h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAll()">
+                        <i class="bi bi-check-all"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteSelected()" disabled id="deleteBtn">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if tasks %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="40">
+                                        <input type="checkbox" class="form-check-input" id="selectAllCheckbox" onchange="toggleAll()">
+                                    </th>
+                                    <th>Nome</th>
+                                    <th>URL</th>
+                                    <th>Status</th>
+                                    <th>Progresso</th>
+                                    <th>Criada em</th>
+                                    <th>Última Atualização</th>
+                                    <th width="120">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks %}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input task-checkbox" 
+                                               value="{{ task.id }}" onchange="updateDeleteButton()">
+                                    </td>
+                                    <td>
+                                        <strong>{{ task.name }}</strong>
+                                        {% if task.description %}
+                                            <br><small class="text-muted">{{ task.description[:100] }}...</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ task.url }}" target="_blank" class="text-decoration-none">
+                                            {{ task.url[:40] }}...
+                                            <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if task.status == 'completed' %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Concluída
+                                            </span>
+                                        {% elif task.status == 'running' %}
+                                            <span class="badge bg-warning">
+                                                <i class="bi bi-arrow-clockwise me-1"></i>Executando
+                                            </span>
+                                        {% elif task.status == 'pending' %}
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-clock me-1"></i>Pendente
+                                            </span>
+                                        {% elif task.status == 'failed' %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle me-1"></i>Falhou
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.status == 'running' and task.progress %}
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ task.progress }}%" 
+                                                     aria-valuenow="{{ task.progress }}" 
+                                                     aria-valuemin="0" aria-valuemax="100">
+                                                    {{ task.progress }}%
+                                                </div>
+                                            </div>
+                                        {% elif task.status == 'completed' %}
+                                            <span class="text-success">
+                                                <i class="bi bi-check-circle"></i> 100%
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ task.created_at.strftime('%d/%m/%Y %H:%M') if task.created_at else 'N/A' }}</small>
+                                    </td>
+                                    <td>
+                                        <small>{{ task.updated_at.strftime('%d/%m/%Y %H:%M') if task.updated_at else 'N/A' }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('scraping.task_detail', task_id=task.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="Ver Detalhes">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            
+                                            {% if task.status == 'pending' %}
+                                                <button class="btn btn-sm btn-outline-success" 
+                                                        onclick="startTask({{ task.id }})" title="Iniciar">
+                                                    <i class="bi bi-play"></i>
+                                                </button>
+                                            {% elif task.status == 'running' %}
+                                                <button class="btn btn-sm btn-outline-warning" 
+                                                        onclick="stopTask({{ task.id }})" title="Parar">
+                                                    <i class="bi bi-stop"></i>
+                                                </button>
+                                            {% endif %}
+                                            
+                                            {% if task.status == 'completed' %}
+                                                <a href="{{ url_for('export.export_page', task_id=task.id) }}" 
+                                                   class="btn btn-sm btn-outline-info" title="Exportar">
+                                                    <i class="bi bi-download"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                        <h4 class="text-muted mt-3">Nenhuma tarefa encontrada</h4>
+                        <p class="text-muted">Crie sua primeira tarefa de scraping para começar.</p>
+                        <a href="{{ url_for('scraping.new_task') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Criar Primeira Tarefa
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Paginação -->
+{% if tasks and tasks|length >= 20 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <nav aria-label="Navegação de páginas">
+            <ul class="pagination justify-content-center">
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Anterior">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Próximo">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Gerenciamento de seleção de tarefas
+function toggleAll() {
+    const selectAll = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.task-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateDeleteButton();
+}
+
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.task-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    
+    selectAllCheckbox.checked = true;
+    updateDeleteButton();
+}
+
+function updateDeleteButton() {
+    const checkboxes = document.querySelectorAll('.task-checkbox:checked');
+    const deleteBtn = document.getElementById('deleteBtn');
+    
+    deleteBtn.disabled = checkboxes.length === 0;
+    
+    // Atualizar estado do checkbox "selecionar todos"
+    const allCheckboxes = document.querySelectorAll('.task-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    if (checkboxes.length === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    } else if (checkboxes.length === allCheckboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+    } else {
+        selectAllCheckbox.indeterminate = true;
+    }
+}
+
+// Ações de tarefa
+function startTask(taskId) {
+    if (confirm('Deseja iniciar esta tarefa?')) {
+        fetch(`/task/${taskId}/start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success || !data.error) {
+                location.reload();
+            } else {
+                alert('Erro ao iniciar tarefa: ' + (data.error || data.message));
+            }
+        })
+        .catch(error => {
+            alert('Erro ao iniciar tarefa: ' + error.message);
+        });
+    }
+}
+
+function stopTask(taskId) {
+    if (confirm('Deseja parar esta tarefa?')) {
+        fetch(`/task/${taskId}/stop`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success || !data.error) {
+                location.reload();
+            } else {
+                alert('Erro ao parar tarefa: ' + (data.error || data.message));
+            }
+        })
+        .catch(error => {
+            alert('Erro ao parar tarefa: ' + error.message);
+        });
+    }
+}
+
+function deleteSelected() {
+    const checkboxes = document.querySelectorAll('.task-checkbox:checked');
+    const taskIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (taskIds.length === 0) {
+        alert('Selecione pelo menos uma tarefa para excluir.');
+        return;
+    }
+    
+    if (confirm(`Deseja excluir ${taskIds.length} tarefa(s) selecionada(s)?`)) {
+        fetch('/scraping/tasks/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ task_ids: taskIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao excluir tarefas: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Erro ao excluir tarefas: ' + error.message);
+        });
+    }
+}
+
+// Auto-refresh para tarefas em execução
+setInterval(() => {
+    const runningTasks = document.querySelectorAll('.badge.bg-warning');
+    if (runningTasks.length > 0) {
+        // Atualizar apenas as linhas com tarefas em execução
+        location.reload();
+    }
+}, 30000); // Atualizar a cada 30 segundos
+</script>
+{% endblock %}

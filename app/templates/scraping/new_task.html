@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Tarefa - Facebook Scraper{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-plus-circle"></i>
+                    Nova Tarefa de Scraping
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('scraping.new_task') }}">
+                    <!-- Configuração Básica -->
+                    <div class="mb-4">
+                        <h5 class="text-primary">📋 Configuração Básica</h5>
+                        <hr>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nome da Tarefa *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ form_data.name if form_data else '' }}" 
+                                   placeholder="Ex: Scraping Página Empresa XYZ" required>
+                            <div class="form-text">Escolha um nome descritivo para identificar esta tarefa.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="url" class="form-label">URL do Facebook *</label>
+                            <input type="url" class="form-control" id="url" name="url" 
+                                   value="{{ form_data.url if form_data else '' }}" 
+                                   placeholder="https://facebook.com/pagina-exemplo" required>
+                            <div class="form-text">URL completa da página ou perfil público do Facebook.</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Seleção de Dados -->
+                    <div class="mb-4">
+                        <h5 class="text-primary">🎯 Tipos de Dados para Extrair</h5>
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="data_posts" 
+                                           name="data_types" value="post" checked>
+                                    <label class="form-check-label" for="data_posts">
+                                        <strong>Posts</strong>
+                                        <small class="text-muted d-block">Texto e conteúdo das publicações</small>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="data_comments" 
+                                           name="data_types" value="comment">
+                                    <label class="form-check-label" for="data_comments">
+                                        <strong>Comentários</strong>
+                                        <small class="text-muted d-block">Comentários dos posts</small>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="data_likes" 
+                                           name="data_types" value="like">
+                                    <label class="form-check-label" for="data_likes">
+                                        <strong>Curtidas</strong>
+                                        <small class="text-muted d-block">Número de curtidas</small>
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="data_profile" 
+                                           name="data_types" value="profile">
+                                    <label class="form-check-label" for="data_profile">
+                                        <strong>Informações do Perfil</strong>
+                                        <small class="text-muted d-block">Dados básicos da página</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configurações Avançadas -->
+                    <div class="mb-4">
+                        <h5 class="text-primary">⚙️ Configurações Avançadas</h5>
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="max_items" class="form-label">Máximo de Itens</label>
+                                    <input type="number" class="form-control" id="max_items" name="max_items" 
+                                           value="{{ form_data.max_items if form_data else '100' }}" 
+                                           min="1" max="1000">
+                                    <div class="form-text">Número máximo de itens para extrair (1-1000).</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="date_filter" class="form-label">Filtro de Data</label>
+                                    <select class="form-select" id="date_filter" name="date_filter">
+                                        <option value="">Todas as datas</option>
+                                        <option value="7d">Últimos 7 dias</option>
+                                        <option value="30d">Últimos 30 dias</option>
+                                        <option value="90d">Últimos 90 dias</option>
+                                    </select>
+                                    <div class="form-text">Filtrar posts por período.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="delay_min" class="form-label">Delay Mínimo (segundos)</label>
+                                    <input type="number" class="form-control" id="delay_min" name="delay_min" 
+                                           value="{{ form_data.delay_min if form_data else '1' }}" 
+                                           min="1" max="10">
+                                    <div class="form-text">Tempo mínimo entre requisições.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="delay_max" class="form-label">Delay Máximo (segundos)</label>
+                                    <input type="number" class="form-control" id="delay_max" name="delay_max" 
+                                           value="{{ form_data.delay_max if form_data else '3' }}" 
+                                           min="1" max="10">
+                                    <div class="form-text">Tempo máximo entre requisições.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i>
+                            Cancelar
+                        </a>
+                        
+                        <button type="submit" class="btn btn-facebook">
+                            <i class="bi bi-play-circle"></i>
+                            Criar Tarefa
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informações Importantes -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    Informações Importantes
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Esta ferramenta extrai apenas dados <strong>públicos</strong> do Facebook.</li>
+                    <li>Respeite os termos de serviço do Facebook e leis de privacidade aplicáveis.</li>
+                    <li>O tempo de execução varia conforme a quantidade de dados e configurações.</li>
+                    <li>Delays maiores reduzem o risco de bloqueios, mas aumentam o tempo total.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validação do formulário
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const urlInput = document.getElementById('url');
+    const checkboxes = document.querySelectorAll('input[name="data_types"]');
+    
+    // Validar URL do Facebook
+    urlInput.addEventListener('blur', function() {
+        const url = this.value;
+        const facebookPattern = /^https?:\/\/(www\.)?(facebook|fb)\.com\/.+/;
+        
+        if (url && !facebookPattern.test(url)) {
+            this.classList.add('is-invalid');
+            if (!this.nextElementSibling.classList.contains('invalid-feedback')) {
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.textContent = 'Por favor, insira uma URL válida do Facebook.';
+                this.parentNode.appendChild(feedback);
+            }
+        } else {
+            this.classList.remove('is-invalid');
+            const feedback = this.parentNode.querySelector('.invalid-feedback');
+            if (feedback) {
+                feedback.remove();
+            }
+        }
+    });
+    
+    // Validar pelo menos um tipo de dado selecionado
+    form.addEventListener('submit', function(e) {
+        const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+        
+        if (checkedBoxes.length === 0) {
+            e.preventDefault();
+            alert('Por favor, selecione pelo menos um tipo de dado para extrair.');
+            return false;
+        }
+    });
+    
+    // Sincronizar delays
+    const delayMin = document.getElementById('delay_min');
+    const delayMax = document.getElementById('delay_max');
+    
+    delayMin.addEventListener('change', function() {
+        if (parseInt(this.value) > parseInt(delayMax.value)) {
+            delayMax.value = this.value;
+        }
+    });
+    
+    delayMax.addEventListener('change', function() {
+        if (parseInt(this.value) < parseInt(delayMin.value)) {
+            delayMin.value = this.value;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Erro Interno - Facebook Scraper{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4 class="text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Erro Interno do Servidor
+                </h4>
+            </div>
+            <div class="card-body text-center">
+                <h1 class="display-1 text-muted">500</h1>
+                <p class="lead">Ops! Algo deu errado no servidor.</p>
+                <p class="text-muted">
+                    Ocorreu um erro interno inesperado. Nossa equipe foi notificada e está trabalhando para resolver o problema.
+                </p>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-facebook me-2">
+                        <i class="bi bi-house"></i>
+                        Voltar ao Dashboard
+                    </a>
+                    <button onclick="history.back()" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i>
+                        Página Anterior
+                    </button>
+                </div>
+                
+                <hr class="my-4">
+                
+                <div class="text-muted">
+                    <small>
+                        Se o problema persistir, entre em contato com o suporte técnico.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
